@@ -1,0 +1,57 @@
+export const data = {
+  members: [
+    {
+      id: "GA5Q2PZWIHSCOHNIGJN4BX5P42B4EMGTYAS3XCMAHEHCFFKCQQ3ZX34A",
+      count: 1,
+      delegateA: null,
+      delegateC: "GCPOWDQQDVSAQGJXZW3EWPPJ5JCF4KTTHBYNB4U54AKQVDLZXLLYMXY7",
+    },
+    {
+      id: "GA6COOXOZOA6EWP6KPFYR752EDUXTWQ6IBLEJH6LYI3CUSVVAQXH2NII",
+      count: 0,
+      delegateA: null,
+      delegateC: null,
+    },
+    {
+      id: "GAKVQQD5HFSSXWN3E3K6QL573NQG5GJNFKW52RY6FPXH3CYVVADCDH4U",
+      count: 10,
+      delegateA: null,
+      delegateC: null,
+    },
+    {
+      id: "GAQPZKOYGJDEWLYO6PBOJ4NG6HNBBNNZSOJNKUUCVJGLBQIQSO5AC26F",
+      count: 1,
+      delegateA: null,
+      delegateC: null,
+    },
+    {
+      id: "GBXLHXSPLDEBG5J6HOLPEXBHTS4FOCYAZCWZSBZQZLQFSQ3DYUWK5RP6",
+      count: 1,
+      delegateA: "GAQPZKOYGJDEWLYO6PBOJ4NG6HNBBNNZSOJNKUUCVJGLBQIQSO5AC26F",
+      delegateC: "GAQPZKOYGJDEWLYO6PBOJ4NG6HNBBNNZSOJNKUUCVJGLBQIQSO5AC26F",
+    },
+    {
+      id: "GDUMK6YJZ6ZC72CAMVHLUHLIFTNSLD7WFWO75Q3T2EOEW75XWH4PNSOZ",
+      count: 1,
+      delegateA: null,
+      delegateC: "GAKVQQD5HFSSXWN3E3K6QL573NQG5GJNFKW52RY6FPXH3CYVVADCDH4U",
+    },
+    {
+      id: "GDKW5JGMLZND2OA6A4FN562ZIRQFTF3B2GQWR4L5OUQAKYV5HRDPMRR2",
+      count: 1,
+      delegateA: null,
+      delegateC: "GDUMK6YJZ6ZC72CAMVHLUHLIFTNSLD7WFWO75Q3T2EOEW75XWH4PNSOZ",
+    },
+  ],
+  currentA: [],
+  currentC: [
+    {
+      id: "GA5Q2PZWIHSCOHNIGJN4BX5P42B4EMGTYAS3XCMAHEHCFFKCQQ3ZX34A",
+      count: 1,
+    },
+    {
+      id: "GAKVQQD5HFSSXWN3E3K6QL573NQG5GJNFKW52RY6FPXH3CYVVADCDH4U",
+      count: 1,
+    },
+  ],
+};
