@@ -14,7 +14,9 @@ const renderTree = (member: IMember & { children?: IMember[] }) => {
   return (
     <>
       <li key={member.id}>
-        {member.id} {sumCount(member)}
+        <div style={{ display: "flex", gap: "16px" }}>
+          {renderId(member.id)} {sumCount(member)}
+        </div>
       </li>
       {!!member.children?.length && (
         <ul key={`${member.id}_children`}>
@@ -38,6 +40,19 @@ const newC = tree
     count: sumCount(member as IMember & { children?: IMember[] }),
   }))
   .sort((a, b) => b.count - a.count);
+
+const renderId = (id: string | null) => {
+  if (!id) return null;
+  return (
+    <a
+      href={`https://stellar.expert/explorer/public/account/${id}`}
+      target="_blank"
+    >
+      {id.replace(id.substring(4, id.length - 4), "...")}
+    </a>
+  );
+};
+
 export default function Home() {
   return (
     <main>
@@ -55,10 +70,10 @@ export default function Home() {
           <tbody>
             {data?.members?.map((member) => (
               <tr key={member.id}>
-                <td>{member.id}</td>
+                <td>{renderId(member.id)}</td>
                 <td>{member.count}</td>
-                <td>{member.delegateA}</td>
-                <td>{member.delegateC}</td>
+                <td>{renderId(member.delegateA)}</td>
+                <td>{renderId(member.delegateC)}</td>
               </tr>
             ))}
           </tbody>
@@ -87,7 +102,7 @@ export default function Home() {
           <tbody>
             {newC?.map((member: Pick<IMember, "id" | "count">) => (
               <tr key={member.id}>
-                <td>{member.id}</td>
+                <td>{renderId(member.id)}</td>
                 <td>{member.count}</td>
                 <td>{Math.ceil(Math.log10(member.count))}</td>
               </tr>
@@ -108,7 +123,7 @@ export default function Home() {
           <tbody>
             {data.currentC?.map((member) => (
               <tr key={member.id}>
-                <td>{member.id}</td>
+                <td>{renderId(member.id)}</td>
                 <td>{member.count}</td>
               </tr>
             ))}

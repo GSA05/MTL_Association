@@ -30,3 +30,8 @@ td {
 tr {
   padding: 4px;
 }
+
+a {
+  color: rgb(var(--foreground-rgb));
+  text-decoration-line: none;
+}
