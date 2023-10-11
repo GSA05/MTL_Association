@@ -3,7 +3,7 @@ import { useGetCurrentC } from "@/hooks";
 import { Link } from "./Link";
 
 export function CurrentC() {
-  const { currentC, error, mutate } = useGetCurrentC();
+  const { currentC, error, mutate, isLoading, isValidating } = useGetCurrentC();
   return (
     <section>
       <div
@@ -14,7 +14,11 @@ export function CurrentC() {
         }}
       >
         <h1>Текущий состав Совета</h1>
-        <button onClick={() => mutate()}>Обновить</button>
+        {isLoading || isValidating ? (
+          "Загрузка..."
+        ) : (
+          <button onClick={() => mutate()}>Обновить</button>
+        )}
         <table cellSpacing="16px">
           <thead>
             <tr>

@@ -8,7 +8,7 @@ export const useGetCurrentC = () => {
   const response = useSWR<AccountResponse>("currentC", () =>
     server.loadAccount(config.mainAccount)
   );
-  const { data: account, error, mutate } = response;
+  const { data: account, error, mutate, isLoading, isValidating } = response;
   return {
     currentC: account?.signers
       .filter((signer) => signer.key !== config.mainAccount)
@@ -19,5 +19,7 @@ export const useGetCurrentC = () => {
       .sort((a, b) => b.count - a.count),
     error,
     mutate,
+    isLoading,
+    isValidating,
   };
 };
