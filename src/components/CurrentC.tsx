@@ -1,6 +1,6 @@
 "use client";
 import { useGetCurrentC } from "@/hooks";
-import { renderId } from "../app/page";
+import { Link } from "./Link";
 
 export function CurrentC() {
   const { currentC, error } = useGetCurrentC();
@@ -17,7 +17,7 @@ export function CurrentC() {
         <tbody>
           {currentC?.map((member) => (
             <tr key={member.id}>
-              <td>{renderId(member.id)}</td>
+              <td>{Link(member.id)}</td>
               <td>{member.count}</td>
             </tr>
           ))}

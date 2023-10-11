@@ -2,6 +2,7 @@ import { arrayToTree } from "performant-array-to-tree";
 import { data } from "../fixture/dev";
 import { IMember } from "@/interfaces";
 import { CurrentC } from "../components/CurrentC";
+import { Link } from "../components/Link";
 
 const tree = arrayToTree(
   data?.members?.filter((member) => member.count > 0),
@@ -16,7 +17,7 @@ const renderTree = (member: IMember & { children?: IMember[] }) => {
     <>
       <li key={member.id}>
         <div style={{ display: "flex", gap: "16px" }}>
-          {renderId(member.id)} {sumCount(member)}
+          {Link(member.id)} {sumCount(member)}
         </div>
       </li>
       {!!member.children?.length && (
@@ -42,18 +43,6 @@ const newC = tree
   }))
   .sort((a, b) => b.count - a.count);
 
-export const renderId = (id: string | null) => {
-  if (!id) return null;
-  return (
-    <a
-      href={`https://stellar.expert/explorer/public/account/${id}`}
-      target="_blank"
-    >
-      {id.replace(id.substring(4, id.length - 4), "...")}
-    </a>
-  );
-};
-
 export default function Home() {
   return (
     <main>
@@ -71,10 +60,10 @@ export default function Home() {
           <tbody>
             {data?.members?.map((member) => (
               <tr key={member.id}>
-                <td>{renderId(member.id)}</td>
+                <td>{Link(member.id)}</td>
                 <td>{member.count}</td>
-                <td>{renderId(member.delegateA)}</td>
-                <td>{renderId(member.delegateC)}</td>
+                <td>{Link(member.delegateA)}</td>
+                <td>{Link(member.delegateC)}</td>
               </tr>
             ))}
           </tbody>
@@ -103,7 +92,7 @@ export default function Home() {
           <tbody>
             {newC?.map((member: Pick<IMember, "id" | "count">) => (
               <tr key={member.id}>
-                <td>{renderId(member.id)}</td>
+                <td>{Link(member.id)}</td>
                 <td>{member.count}</td>
                 <td>{Math.ceil(Math.log10(member.count))}</td>
               </tr>
