@@ -1,6 +1,7 @@
 import { arrayToTree } from "performant-array-to-tree";
 import { data } from "../fixture/dev";
 import { IMember } from "@/interfaces";
+import { CurrentC } from "../components/CurrentC";
 
 const tree = arrayToTree(
   data?.members?.filter((member) => member.count > 0),
@@ -41,7 +42,7 @@ const newC = tree
   }))
   .sort((a, b) => b.count - a.count);
 
-const renderId = (id: string | null) => {
+export const renderId = (id: string | null) => {
   if (!id) return null;
   return (
     <a
@@ -111,25 +112,7 @@ export default function Home() {
         </table>
       </section>
       <hr />
-      <section>
-        <h1>Текущий состав Совета</h1>
-        <table cellSpacing="16px">
-          <thead>
-            <tr>
-              <th>Аккаунт</th>
-              <th>Вес голоса</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.currentC?.map((member) => (
-              <tr key={member.id}>
-                <td>{renderId(member.id)}</td>
-                <td>{member.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <CurrentC />
     </main>
   );
 }
