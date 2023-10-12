@@ -10,10 +10,11 @@ import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { config } from "../config";
 import { IMember } from "@/interfaces";
-import { differenceBy, flatMap } from "lodash";
+import { differenceBy, flatMap, intersectionWith } from "lodash";
 import { useEffect } from "react";
 import { arrayToTree } from "performant-array-to-tree";
 import { sumCount } from "@/utils";
+import { data as testData } from "@/fixture/dev";
 
 const server = new Server("https://horizon.stellar.org");
 const mtlapAsset = new Asset(config.mtlapToken, config.mainAccount);
@@ -24,13 +25,15 @@ export const useGetCurrentC = () => {
   );
   const { data: account, error, mutate, isLoading, isValidating } = response;
   return {
-    currentC: account?.signers
-      .filter((signer) => signer.key !== config.mainAccount)
-      .map((signer) => ({
-        id: signer.key,
-        count: signer.weight,
-      }))
-      .sort((a, b) => b.count - a.count),
+    currentC: false
+      ? testData.currentC
+      : account?.signers
+          .filter((signer) => signer.key !== config.mainAccount)
+          .map((signer) => ({
+            id: signer.key,
+            count: signer.weight,
+          }))
+          .sort((a, b) => b.count - a.count),
     error,
     mutate,
     isLoading,
@@ -131,13 +134,46 @@ export const useGetNewC = () => {
 
 export const useGetChanges = () => {
   const {
-    currentC,
+    currentC = [],
     mutate: mutateCurrentC,
     isLoading: isLoadingCurrentC,
     isValidating: isValidatingCurrentC,
   } = useGetCurrentC();
   const { newC, isLoading, isValidating, mutate } = useGetNewC();
   const changes: Record<string, number> = {};
-  const removed = differenceBy(currentC, newC, "id");
-  removed.forEach((member) => (changes[member.id] = 0));
+  const removedMembers = differenceBy(currentC, newC, "id");
+  removedMembers.forEach((member) => (changes[member.id] = 0));
+  const newMembers = differenceBy(newC, currentC, "id");
+  newMembers.forEach((member) => (changes[member.id] = member.weight));
+  const changedMembers = intersectionWith(
+    newC,
+    currentC,
+    (a, b) => a.id === b.id && a.weight !== b.count
+  );
+  changedMembers.forEach((member) => (changes[member.id] = member.weight));
+  const currentCDic = currentC.reduce<Record<string, number>>(
+    (prev, cur) => ({ ...prev, [cur.id]: cur.count }),
+    {}
+  );
+  return {
+    changes: Object.keys(changes).map((id) => {
+      const old = currentCDic[id] ?? 0;
+      const weight = changes[id];
+      return {
+        id,
+        weight,
+        diff:
+          old === 0
+            ? "новый"
+            : weight < old
+            ? `- ${old - weight}`
+            : `+ ${weight - old}`,
+      };
+    }),
+    isLoading: isLoading || isLoadingCurrentC,
+    isValidating: isValidating || isValidatingCurrentC,
+    mutate: () => {
+      Promise.all([mutate(), mutateCurrentC()]);
+    },
+  };
 };
