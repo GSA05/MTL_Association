@@ -1,18 +1,11 @@
 "use client";
 import { IMember } from "@/interfaces";
 import { Link } from "./Link";
-import { useGetTree } from "@/hooks";
+import { useGetNewC, useGetTree } from "@/hooks";
 import { sumCount } from "@/utils";
 
 export function NewC() {
-  const { tree, isLoading, isValidating, mutate } = useGetTree();
-  const newC = tree
-    .map((member) => ({
-      ...(member as IMember),
-      count: sumCount(member as IMember & { children?: IMember[] }),
-    }))
-    .splice(0, 20)
-    .sort((a, b) => b.count - a.count);
+  const { newC, isLoading, isValidating, mutate } = useGetNewC();
   return (
     <section>
       <div
@@ -37,13 +30,11 @@ export function NewC() {
             </tr>
           </thead>
           <tbody>
-            {newC?.map((member: Pick<IMember, "id" | "count">) => (
+            {newC?.map((member: Pick<IMember, "id" | "count" | "weight">) => (
               <tr key={member.id}>
                 <td>{Link(member.id)}</td>
                 <td>{member.count}</td>
-                <td>
-                  {Math.floor(Math.log10(Math.max(member.count, 2) - 1) + 1)}
-                </td>
+                <td>{member.weight}</td>
               </tr>
             ))}
           </tbody>

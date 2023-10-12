@@ -10,9 +10,10 @@ import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { config } from "../config";
 import { IMember } from "@/interfaces";
-import { flatMap } from "lodash";
+import { differenceBy, flatMap } from "lodash";
 import { useEffect } from "react";
 import { arrayToTree } from "performant-array-to-tree";
+import { sumCount } from "@/utils";
 
 const server = new Server("https://horizon.stellar.org");
 const mtlapAsset = new Asset(config.mtlapToken, config.mainAccount);
@@ -108,4 +109,35 @@ export const useGetTree = () => {
     }
   );
   return { tree, isLoading, isValidating, mutate };
+};
+
+export const useGetNewC = () => {
+  const { tree, isLoading, isValidating, mutate } = useGetTree();
+  const newC = tree
+    .map((member) => ({
+      ...(member as IMember),
+      count: sumCount(member as IMember & { children?: IMember[] }),
+      weight: Math.floor(
+        Math.log10(
+          Math.max(sumCount(member as IMember & { children?: IMember[] }), 2) -
+            1
+        ) + 1
+      ),
+    }))
+    .splice(0, 20)
+    .sort((a, b) => b.count - a.count);
+  return { newC, isLoading, isValidating, mutate };
+};
+
+export const useGetChanges = () => {
+  const {
+    currentC,
+    mutate: mutateCurrentC,
+    isLoading: isLoadingCurrentC,
+    isValidating: isValidatingCurrentC,
+  } = useGetCurrentC();
+  const { newC, isLoading, isValidating, mutate } = useGetNewC();
+  const changes: Record<string, number> = {};
+  const removed = differenceBy(currentC, newC, "id");
+  removed.forEach((member) => (changes[member.id] = 0));
 };
