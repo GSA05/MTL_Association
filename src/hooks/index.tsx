@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { arrayToTree } from "performant-array-to-tree";
 import { sumCount } from "@/utils";
 import { data as testData } from "@/fixture/dev";
+import { Link } from "@/components/Link";
 
 const server = new Server("https://horizon.stellar.org");
 const mtlapAsset = new Asset(config.mtlapToken, config.mainAccount);
@@ -124,9 +125,13 @@ export const useGetTree = () => {
   } catch (e) {
     console.error(e);
     const badId = /\[(.+?)\]/.exec(e as string)?.[1];
-    error = `В делигациях есть циклические ссылки или ссылки на недействительных участников${
-      badId ? ` (${badId})` : ""
-    }!`;
+    error = () => (
+      <>
+        В делигациях есть циклические ссылки или ссылки на недействительных
+        участников
+        {badId ? <> ({Link(badId)})</> : ""}!
+      </>
+    );
   }
   return { tree, isLoading, isValidating, mutate, error };
 };

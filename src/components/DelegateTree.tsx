@@ -25,7 +25,7 @@ export function DelegateTree() {
             Tree(member as IMember & { children?: IMember[] })
           )}
         </ul>
-        {error && <div style={{ color: "red" }}>{error}</div>}
+        {error && <div style={{ color: "red" }}>{error()}</div>}
       </div>
     </section>
   );
