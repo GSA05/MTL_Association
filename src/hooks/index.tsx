@@ -190,7 +190,7 @@ export const useGetNewC = () => {
       ),
     }))
     .splice(0, 20)
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
   return { newC, isLoading, isValidating, mutate };
 };
 

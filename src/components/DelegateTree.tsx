@@ -25,7 +25,10 @@ export function DelegateTree() {
                 member as IMember & { children?: IMember[] }
               ),
             }))
-            ?.sort((a, b) => b.delegations - a.delegations)
+            ?.sort(
+              (a, b) =>
+                b.delegations - a.delegations || a.id.localeCompare(b.id)
+            )
             ?.map((member, index) => (
               <>
                 {member.count > 0

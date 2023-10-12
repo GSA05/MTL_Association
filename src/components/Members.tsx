@@ -26,14 +26,16 @@ export function Members() {
             </tr>
           </thead>
           <tbody>
-            {members?.map((member) => (
-              <tr key={member.id}>
-                <td>{Link(member.id)}</td>
-                <td>{member.count}</td>
-                <td>{Link(member.delegateA)}</td>
-                <td>{Link(member.delegateC)}</td>
-              </tr>
-            ))}
+            {members
+              ?.sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
+              ?.map((member) => (
+                <tr key={member.id}>
+                  <td>{Link(member.id)}</td>
+                  <td>{member.count}</td>
+                  <td>{Link(member.delegateA)}</td>
+                  <td>{Link(member.delegateC)}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
