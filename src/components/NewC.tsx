@@ -16,24 +16,20 @@ export function NewC() {
         }}
       >
         <h1>Ожидаемый состав Совета</h1>
-        {isLoading || isValidating ? (
-          "Загрузка..."
-        ) : (
-          <button onClick={() => mutate()}>Обновить</button>
-        )}
+        {(isLoading || isValidating) && <div>Загрузка...</div>}
         <table cellSpacing="16px">
           <thead>
             <tr>
               <th>Аккаунт</th>
-              <th>Количество токенов MTLAP (с учетом делегаций)</th>
-              <th>Вес голоса</th>
+              <th>Делегирования</th>
+              <th>Голоса</th>
             </tr>
           </thead>
           <tbody>
-            {newC?.map((member: Pick<IMember, "id" | "count" | "weight">) => (
+            {newC?.map((member: Pick<IMember, "id" | "count" | "weight" | "delegations">) => (
               <tr key={member.id}>
                 <td>{Link(member.id)}</td>
-                <td>{member.count}</td>
+                <td>{member.delegations}</td>
                 <td>{member.weight}</td>
               </tr>
             ))}

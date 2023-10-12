@@ -24,14 +24,21 @@ body {
 
 td {
   text-align: center;
-  padding: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  /* border-bottom: 0.1px solid rgb(var(--foreground-rgb)); */
 }
 
 tr {
-  padding: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 a {
   color: rgb(var(--foreground-rgb));
   text-decoration-line: none;
+}
+
+table {
+  border-spacing: 4px;
 }

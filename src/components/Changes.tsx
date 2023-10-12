@@ -15,11 +15,6 @@ export function Changes() {
         }}
       >
         <h1>Разница расчетного и текущего:</h1>
-        {isLoading || isValidating ? (
-          "Загрузка..."
-        ) : (
-          <button onClick={() => mutate()}>Обновить</button>
-        )}
         {changes?.length > 0 ? (
           <table cellSpacing="16px">
             <thead>
@@ -43,6 +38,16 @@ export function Changes() {
           </table>
         ) : (
           "Нет изменений"
+        )}
+        {isLoading || isValidating ? (
+          <div>Загрузка...</div>
+        ) : (
+          <button
+            onClick={() => mutate()}
+            style={{ width: "320px", height: "32px", margin: "16px" }}
+          >
+            Обновить
+          </button>
         )}
       </div>
     </section>

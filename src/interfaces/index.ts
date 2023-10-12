@@ -4,4 +4,5 @@ export interface IMember {
   delegateA: string;
   delegateC: string;
   weight?: number;
+  delegations?: number;
 }

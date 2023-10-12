@@ -9,11 +9,11 @@ export default function Home() {
     <main>
       <Members />
       <hr />
+      <CurrentC />
+      <hr />
       <DelegateTree />
       <hr />
       <NewC />
-      <hr />
-      <CurrentC />
       <hr />
       <Changes />
     </main>

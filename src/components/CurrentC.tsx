@@ -13,17 +13,13 @@ export function CurrentC() {
           alignItems: "center",
         }}
       >
-        <h1>Текущий состав Совета</h1>
-        {isLoading || isValidating ? (
-          "Загрузка..."
-        ) : (
-          <button onClick={() => mutate()}>Обновить</button>
-        )}
+        <h1>Актуальный состав Совета</h1>
+        {(isLoading || isValidating) && <div>Загрузка...</div>}
         <table cellSpacing="16px">
           <thead>
             <tr>
               <th>Аккаунт</th>
-              <th>Вес голоса</th>
+              <th>Голоса</th>
             </tr>
           </thead>
           <tbody>

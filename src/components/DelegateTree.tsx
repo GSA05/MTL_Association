@@ -15,14 +15,12 @@ export function DelegateTree() {
         }}
       >
         <h1>Проверка делегаций для Совета:</h1>
-        {isLoading || isValidating ? (
-          "Загрузка..."
-        ) : (
-          <button onClick={() => mutate()}>Обновить</button>
-        )}
+        {(isLoading || isValidating) && <div>Загрузка...</div>}
         <ul key="tree">
           {tree?.map((member) =>
-            Tree(member as IMember & { children?: IMember[] })
+            member.count > 0
+              ? Tree(member as IMember & { children?: IMember[] })
+              : null
           )}
         </ul>
         {error && <div style={{ color: "red" }}>{error()}</div>}

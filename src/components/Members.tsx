@@ -1,16 +1,9 @@
 "use client";
 import { useGetMembers } from "@/hooks";
 import { Link } from "./Link";
-import { useEffect } from "react";
 
 export function Members() {
-  const { members, size, setSize, data, isLoading, isValidating, mutate } =
-    useGetMembers();
-  useEffect(() => {
-    if (data && data?.[size - 1]?.records?.length > 0) {
-      setSize(size + 1);
-    }
-  }, [data, size]);
+  const { members, isLoading, isValidating, mutate } = useGetMembers();
 
   return (
     <section>
@@ -21,19 +14,15 @@ export function Members() {
           alignItems: "center",
         }}
       >
-        <h1>Открывшие линии доверия к MTLAP</h1>
-        {isLoading || isValidating ? (
-          "Загрузка..."
-        ) : (
-          <button onClick={() => mutate()}>Обновить</button>
-        )}
+        <h1>Индивидуальные участники Ассоциации</h1>
+        {(isLoading || isValidating) && <div>Загрузка...</div>}
         <table cellSpacing="16px">
           <thead>
             <tr>
               <th>Аккаунт</th>
-              <th>Количество токенов MTLAP</th>
-              <th>Делегация в Собрании</th>
-              <th>Делегация в Совете</th>
+              <th>MTLAP</th>
+              <th>Делегат в Собрании</th>
+              <th>Делегат в Совете</th>
             </tr>
           </thead>
           <tbody>
