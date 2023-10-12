@@ -92,7 +92,7 @@ export const useGetMembers = () => {
     isLoading: response.isLoading,
     isValidating: response.isValidating,
     mutate: response.mutate,
-    members,
+    members: false ? testData.members : members,
   };
 };
 
@@ -111,7 +111,24 @@ export const useGetTree = () => {
       dataField: null,
     }
   );
-  return { tree, isLoading, isValidating, mutate };
+  let error;
+  try {
+    arrayToTree(
+      members?.filter((member) => member.count > 0),
+      {
+        parentId: "delegateC",
+        dataField: null,
+        throwIfOrphans: true,
+      }
+    );
+  } catch (e) {
+    console.error(e);
+    const badId = /\[(.+?)\]/.exec(e as string)?.[1];
+    error = `В делигациях есть циклические ссылки или ссылки на недействительных участников${
+      badId ? ` (${badId})` : ""
+    }!`;
+  }
+  return { tree, isLoading, isValidating, mutate, error };
 };
 
 export const useGetNewC = () => {

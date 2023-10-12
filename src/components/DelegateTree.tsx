@@ -4,7 +4,7 @@ import { Tree } from "./Tree";
 import { useGetTree } from "@/hooks";
 
 export function DelegateTree() {
-  const { tree, isLoading, isValidating, mutate } = useGetTree();
+  const { tree, isLoading, isValidating, mutate, error } = useGetTree();
   return (
     <section>
       <div
@@ -25,6 +25,7 @@ export function DelegateTree() {
             Tree(member as IMember & { children?: IMember[] })
           )}
         </ul>
+        {error && <div style={{ color: "red" }}>{error}</div>}
       </div>
     </section>
   );
