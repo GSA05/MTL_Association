@@ -1,10 +1,11 @@
 "use client";
-import { useGetChanges } from "@/hooks";
+import { useGetChanges, useGetTransaction } from "@/hooks";
 import { IMember } from "@/interfaces";
 import { Link } from "./Link";
 
 export function Changes() {
   const { changes, isLoading, isValidating, mutate } = useGetChanges();
+  const xdr = useGetTransaction();
   return (
     <section>
       <div
@@ -48,6 +49,11 @@ export function Changes() {
           >
             Обновить
           </button>
+        )}
+        {xdr && (
+          <p style={{ width: "600px", wordWrap: "break-word",  }}>
+            {xdr.toXDR().toString("base64")}
+          </p>
         )}
       </div>
     </section>

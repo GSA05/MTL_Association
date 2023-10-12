@@ -1,5 +1,19 @@
 "use client";
-import { Server, AccountResponse, Asset, ServerApi } from "stellar-sdk";
+import {
+  Server,
+  AccountResponse,
+  Asset,
+  ServerApi,
+  TransactionBuilder,
+  Operation,
+  Signer,
+  Keypair,
+  Memo,
+  BASE_FEE,
+  Networks,
+  SignerKey,
+  StrKey,
+} from "stellar-sdk";
 import useSWR from "swr";
 import { config } from "../config";
 import { IMember } from "@/interfaces";
@@ -7,6 +21,7 @@ import {
   differenceBy,
   differenceWith,
   intersectionWith,
+  lastIndexOf,
   uniq,
   uniqBy,
 } from "lodash";
@@ -161,7 +176,7 @@ export const useGetTree = () => {
 export const useGetNewC = () => {
   const { tree, isLoading, isValidating, mutate } = useGetTree();
   const newC = tree
-    .filter((member) => member.count > 0)
+    .filter((member) => false || member.count > 0)
     .map((member) => ({
       ...(member as IMember),
       count: sumCount(member as IMember & { children?: IMember[] }),
@@ -267,4 +282,46 @@ export const enrichMembers = async (
     }
   }
   return newMembers;
+};
+
+export const useGetTransaction = () => {
+  const { newC } = useGetNewC();
+  const { changes } = useGetChanges();
+  const response = useSWR<AccountResponse>(
+    "currentC",
+    () => server.loadAccount(config.mainAccount),
+    { revalidateOnFocus: false }
+  );
+  const voicesSum = newC.reduce((prev, cur) => prev + cur.weight, 0);
+  const forTransaction = Math.floor(voicesSum / 2 + 1);
+  if (response.data) {
+    const transaction = new TransactionBuilder(response.data, {
+      fee: "100000",
+      networkPassphrase: Networks.PUBLIC,
+    });
+    transaction.addMemo(Memo.text("Update sign weights"));
+    let opCount = 0;
+    const lastItem = changes[changes.length - 1];
+    changes.forEach((change) => {
+      const operation = Operation.setOptions({
+        signer: {
+          ed25519PublicKey: Keypair.fromPublicKey(change.id).publicKey(),
+          weight: change.weight,
+        },
+        ...(lastItem.id === change.id && {
+          masterWeight: 0,
+          lowThreshold: forTransaction,
+          medThreshold: forTransaction,
+          highThreshold: forTransaction,
+        }),
+      });
+      transaction.addOperation(operation);
+      opCount++;
+    });
+
+    if (opCount) {
+      return transaction.setTimeout(30).build().toEnvelope();
+    }
+  }
+  return null;
 };
