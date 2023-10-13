@@ -5,4 +5,5 @@ export interface IMember {
   delegateC: string;
   weight?: number;
   delegations?: number;
+  removed?: boolean
 }

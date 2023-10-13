@@ -268,7 +268,7 @@ export const enrichMembers = async (
           if (delegateC !== "") {
             delegations.push(delegateC);
           }
-          return { id, count: 0, delegateA, delegateC };
+          return { id, count: 0, delegateA, delegateC, removed: true };
         })
       )
     ).forEach((member) => newMembers.push(member));
