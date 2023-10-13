@@ -2,8 +2,9 @@
 import { useGetChanges, useGetTransaction } from "@/hooks";
 import { IMember } from "@/interfaces";
 import { Link } from "./Link";
+import dynamic from "next/dynamic";
 
-export function Changes() {
+function Changes() {
   const { changes, isLoading, isValidating, mutate } = useGetChanges();
   const xdr = useGetTransaction();
   return (
@@ -51,7 +52,7 @@ export function Changes() {
           </button>
         )}
         {xdr && (
-          <p style={{ width: "600px", wordWrap: "break-word",  }}>
+          <p style={{ width: "600px", wordWrap: "break-word" }}>
             {xdr.toXDR().toString("base64")}
           </p>
         )}
@@ -59,3 +60,5 @@ export function Changes() {
     </section>
   );
 }
+
+export default dynamic(() => Promise.resolve(Changes), { ssr: false });

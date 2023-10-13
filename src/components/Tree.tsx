@@ -1,8 +1,11 @@
 import { IMember } from "@/interfaces";
 import { Link } from "./Link";
 import { sumCount } from "@/utils";
+import { FC } from "react";
 
-export const Tree = (member: IMember & { children?: IMember[] }) => {
+export const Tree: FC<{ member: IMember & { children?: IMember[] } }> = ({
+  member,
+}) => {
   const sum = sumCount(member);
   return (
     <>
@@ -16,7 +19,9 @@ export const Tree = (member: IMember & { children?: IMember[] }) => {
       </li>
       {!!member.children?.length && (
         <ul key={`${member.id}_children`}>
-          {member.children.map((nestedMember) => Tree(nestedMember))}
+          {member.children.map((nestedMember) => (
+            <Tree key={`${nestedMember.id}_children`} member={nestedMember} />
+          ))}
         </ul>
       )}
     </>

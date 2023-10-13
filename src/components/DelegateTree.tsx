@@ -3,8 +3,9 @@ import { IMember } from "@/interfaces";
 import { Tree } from "./Tree";
 import { useGetTree } from "@/hooks";
 import { sumCount } from "@/utils";
+import dynamic from "next/dynamic";
 
-export function DelegateTree() {
+function DelegateTree() {
   const { tree, isLoading, isValidating, mutate, error } = useGetTree();
   return (
     <section>
@@ -29,13 +30,13 @@ export function DelegateTree() {
               (a, b) =>
                 b.delegations - a.delegations || a.id.localeCompare(b.id)
             )
-            ?.map((member, index) => (
-              <>
-                {member.count > 0
-                  ? Tree(member as IMember & { children?: IMember[] })
-                  : null}
+            ?.map((member: IMember & { children?: IMember[] }, index) => (
+              <div key={member.id}>
+                {member.count > 0 ? (
+                  <Tree key={member.id} member={member}/>
+                ) : null}
                 {index === 19 && <hr />}
-              </>
+              </div>
             ))}
         </ul>
         {error && <div style={{ color: "red" }}>{error()}</div>}
@@ -43,3 +44,5 @@ export function DelegateTree() {
     </section>
   );
 }
+
+export default dynamic(() => Promise.resolve(DelegateTree), { ssr: false });

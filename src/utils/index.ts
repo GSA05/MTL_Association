@@ -3,6 +3,7 @@ import { IMember } from "@/interfaces";
 export const sumCount = (
   member: IMember & { children?: IMember[] }
 ): number => {
+  if (!member) return 0;
   return (
     member.count +
     +(member.children?.length

@@ -3,8 +3,9 @@ import { IMember } from "@/interfaces";
 import { Link } from "./Link";
 import { useGetNewC, useGetTree } from "@/hooks";
 import { sumCount } from "@/utils";
+import dynamic from "next/dynamic";
 
-export function NewC() {
+function NewC() {
   const { newC, isLoading, isValidating, mutate } = useGetNewC();
   return (
     <section>
@@ -21,21 +22,35 @@ export function NewC() {
           <thead>
             <tr>
               <th>Аккаунт</th>
-              <th>Делегирования</th>
+              <th>Токены</th>
               <th>Голоса</th>
             </tr>
           </thead>
           <tbody>
-            {newC?.map((member: Pick<IMember, "id" | "count" | "weight" | "delegations">) => (
-              <tr key={member.id}>
-                <td>{Link(member.id)}</td>
-                <td>{member.delegations}</td>
-                <td>{member.weight}</td>
-              </tr>
-            ))}
+            {newC?.map(
+              (
+                member: Pick<IMember, "id" | "count" | "weight" | "delegations">
+              ) => (
+                <tr key={member.id}>
+                  <td>{Link(member.id)}</td>
+                  <td>
+                    {member.delegations ?? 0 > 0
+                      ? member.count +
+                        " = " +
+                        (member.count - (member.delegations ?? 0)) +
+                        " + " +
+                        member.delegations
+                      : member.count}
+                  </td>
+                  <td>{member.weight}</td>
+                </tr>
+              )
+            )}
           </tbody>
         </table>
       </div>
     </section>
   );
 }
+
+export default dynamic(() => Promise.resolve(NewC), { ssr: false });

@@ -42,3 +42,7 @@ a {
 table {
   border-spacing: 4px;
 }
+
+.stellar_address {
+  font-family: Lucida Console, monospace;
+}

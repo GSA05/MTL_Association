@@ -1,8 +1,9 @@
 "use client";
 import { useGetCurrentC } from "@/hooks";
 import { Link } from "./Link";
+import dynamic from "next/dynamic";
 
-export function CurrentC() {
+function CurrentC() {
   const { currentC, error, mutate, isLoading, isValidating } = useGetCurrentC();
   return (
     <section>
@@ -35,3 +36,5 @@ export function CurrentC() {
     </section>
   );
 }
+
+export default dynamic(() => Promise.resolve(CurrentC), { ssr: false });

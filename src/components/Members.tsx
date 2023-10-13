@@ -1,8 +1,9 @@
 "use client";
 import { useGetMembers } from "@/hooks";
 import { Link } from "./Link";
+import dynamic from "next/dynamic";
 
-export function Members() {
+function Members() {
   const { members, isLoading, isValidating, mutate } = useGetMembers();
 
   return (
@@ -42,3 +43,5 @@ export function Members() {
     </section>
   );
 }
+
+export default dynamic(() => Promise.resolve(Members), { ssr: false });
