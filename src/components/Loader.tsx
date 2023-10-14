@@ -1,6 +1,6 @@
 "use client";
 export const Loader = () => {
-  return () => (
+  const Loader = () => (
     <div
       style={{
         display: "flex",
@@ -11,4 +11,5 @@ export const Loader = () => {
       <div>Загрузка...</div>
     </div>
   );
+  return Loader;
 };
