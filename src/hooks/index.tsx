@@ -6,13 +6,10 @@ import {
   ServerApi,
   TransactionBuilder,
   Operation,
-  Signer,
   Keypair,
   Memo,
-  BASE_FEE,
   Networks,
-  SignerKey,
-  StrKey,
+  Horizon,
 } from "stellar-sdk";
 import useSWR from "swr";
 import { config } from "../config";
@@ -21,7 +18,6 @@ import {
   differenceBy,
   differenceWith,
   intersectionWith,
-  lastIndexOf,
   uniq,
   uniqBy,
 } from "lodash";
@@ -29,28 +25,30 @@ import { arrayToTree } from "performant-array-to-tree";
 import { sumCount } from "@/utils";
 import { data as testData } from "@/fixture/dev";
 import { Link } from "@/components/Link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { singletonHook } from "react-singleton-hook";
 
 const server = new Server("https://horizon.stellar.org");
 const mtlapAsset = new Asset(config.mtlapToken, config.mainAccount);
 
-export const useGetCurrentC = () => {
+export const useGetCurrentCImpl = () => {
   const response = useSWR<AccountResponse>(
     "currentC",
     () => server.loadAccount(config.mainAccount),
     { revalidateOnFocus: false }
   );
   const { data: account, error, mutate, isLoading, isValidating } = response;
+  const currentC = useMemo(() => {
+    return account?.signers
+      .filter((signer) => signer.key !== config.mainAccount)
+      .map((signer) => ({
+        id: signer.key,
+        count: signer.weight,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [account]);
   return {
-    currentC: false
-      ? testData.currentC
-      : account?.signers
-          .filter((signer) => signer.key !== config.mainAccount)
-          .map((signer) => ({
-            id: signer.key,
-            count: signer.weight,
-          }))
-          .sort((a, b) => b.count - a.count),
+    currentC: false ? testData.currentC : currentC,
     error,
     mutate,
     isLoading,
@@ -58,20 +56,31 @@ export const useGetCurrentC = () => {
   };
 };
 
-const asyncWhile: (
-  recs: ServerApi.AccountRecord[],
-  func: () => Promise<ServerApi.CollectionPage<ServerApi.AccountRecord>>
-) => Promise<ServerApi.AccountRecord[]> = async (
-  recs: ServerApi.AccountRecord[],
-  func: () => Promise<ServerApi.CollectionPage<ServerApi.AccountRecord>>
-) => {
+export const useGetCurrentC = singletonHook(
+  {
+    currentC: [],
+    error: null,
+    isLoading: false,
+    isValidating: false,
+    mutate: () => Promise.resolve(undefined),
+  },
+  useGetCurrentCImpl
+);
+
+const asyncWhile: <T extends Horizon.BaseResponse>(
+  recs: T[],
+  func: () => Promise<ServerApi.CollectionPage<T>>
+) => Promise<T[]> = async function <T extends Horizon.BaseResponse>(
+  recs: T[],
+  func: () => Promise<ServerApi.CollectionPage<T>>
+) {
   const res = await func();
   recs = recs.concat(res?.records);
   if (res?.records?.length > 0) return await asyncWhile(recs, res.next);
   return recs;
 };
 
-export const useGetMembers = () => {
+export const useGetMembersImpl = () => {
   const response = useSWR<ServerApi.AccountRecord[]>(
     "members",
     async () => {
@@ -79,16 +88,17 @@ export const useGetMembers = () => {
       const res = await server.accounts().forAsset(mtlapAsset).call();
       records = records.concat(
         res.records,
-        await asyncWhile(records, res.next)
+        await asyncWhile<ServerApi.AccountRecord>(records, res.next)
       );
       return records;
     },
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+    }
   );
 
-  const [members, setMembers] = useState<IMember[]>([]);
-  const [delegations, setDelegations] = useState<string[]>([]);
-  useEffect(() => {
+  const [members, delegations]: [IMember[], string[]] = useMemo(() => {
     const mmbrs: IMember[] = [];
     const dlgtns: string[] = [];
     response?.data?.forEach((record) => {
@@ -122,9 +132,10 @@ export const useGetMembers = () => {
         delegateC,
       });
     });
-    setMembers(mmbrs);
-    setDelegations(dlgtns);
-  }, [response.data]);
+    return [mmbrs, dlgtns];
+  }, [response.data?.length]);
+
+  const [fullMembers, setFullMembers] = useState<IMember[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -134,91 +145,135 @@ export const useGetMembers = () => {
         (a, b) => a === b.id
       );
       if (orphans?.length > 0)
-        setMembers(await enrichMembers(uniqBy(members, "id"), orphans, 10));
+        setFullMembers(await enrichMembers(uniqBy(members, "id"), orphans, 10));
     })();
-  }, [members]);
+  }, [members, delegations]);
 
   return {
     data: response.data,
     isLoading: response.isLoading,
     isValidating: response.isValidating,
     mutate: response.mutate,
-    members: false ? testData.members : members,
+    members: false ? testData.members : fullMembers,
   };
 };
 
-export const useGetTree = () => {
+export const useGetMembers = singletonHook(
+  {
+    data: [],
+    isLoading: false,
+    isValidating: false,
+    members: [],
+    mutate: () => Promise.resolve(undefined),
+  },
+  useGetMembersImpl
+);
+
+export const useGetTreeImpl = () => {
   const { members, isLoading, isValidating, mutate } = useGetMembers();
-  const tree = arrayToTree(members, {
-    parentId: "delegateC",
-    dataField: null,
-  });
-  let error;
-  try {
-    arrayToTree(members, {
+  const [tree, error] = useMemo(() => {
+    const tree = arrayToTree(members, {
       parentId: "delegateC",
       dataField: null,
-      throwIfOrphans: true,
     });
-  } catch (e) {
-    const badId = /\[(.+?)\]/.exec(e as string)?.[1];
-    error = () => (
-      <>
-        В делигациях есть циклические ссылки или ссылки на недействительных
-        участников
-        {badId ? <> ({Link(badId)})</> : ""}!
-      </>
-    );
-  }
+    let error;
+    try {
+      arrayToTree(members, {
+        parentId: "delegateC",
+        dataField: null,
+        throwIfOrphans: true,
+      });
+    } catch (e) {
+      const badId = /\[(.+?)\]/.exec(e as string)?.[1];
+      error = () => (
+        <>
+          В делигациях есть циклические ссылки или ссылки на недействительных
+          участников
+          {badId ? <> ({Link(badId)})</> : ""}!
+        </>
+      );
+    }
+    return [tree, error];
+  }, [members]);
   return { tree, isLoading, isValidating, mutate, error };
 };
 
-export const useGetNewC = () => {
+export const useGetTree = singletonHook(
+  {
+    tree: [],
+    isLoading: false,
+    isValidating: false,
+    error: undefined,
+    mutate: () => Promise.resolve(undefined),
+  },
+  useGetTreeImpl
+);
+
+export const useGetNewCImpl = () => {
   const { tree, isLoading, isValidating, mutate } = useGetTree();
-  const newC = tree
-    .filter((member) => false || member.count > 0)
-    .map((member) => ({
-      ...(member as IMember),
-      count: sumCount(member as IMember & { children?: IMember[] }),
-      delegations:
-        sumCount(member as IMember & { children?: IMember[] }) - member.count,
-      weight: Math.floor(
-        Math.log10(
-          Math.max(sumCount(member as IMember & { children?: IMember[] }), 2) -
-            1
-        ) + 1
-      ),
-    }))
-    .splice(0, 20)
-    .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
+  const newC = useMemo(() => {
+    return tree
+      .filter((member) => false || member.count > 0)
+      .map((member) => ({
+        ...(member as IMember),
+        count: sumCount(member as IMember & { children?: IMember[] }),
+        delegations:
+          sumCount(member as IMember & { children?: IMember[] }) - member.count,
+        weight: Math.floor(
+          Math.log10(
+            Math.max(
+              sumCount(member as IMember & { children?: IMember[] }),
+              2
+            ) - 1
+          ) + 1
+        ),
+      }))
+      .splice(0, 20)
+      .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
+  }, [tree]);
   return { newC, isLoading, isValidating, mutate };
 };
 
-export const useGetChanges = () => {
+export const useGetNewC = singletonHook(
+  {
+    newC: [],
+    isLoading: false,
+    isValidating: false,
+    mutate: () => Promise.resolve(undefined),
+  },
+  useGetNewCImpl
+);
+
+export const useGetChangesImpl = () => {
   const {
     currentC = [],
     mutate: mutateCurrentC,
     isLoading: isLoadingCurrentC,
     isValidating: isValidatingCurrentC,
   } = useGetCurrentC();
-  const { newC, isLoading, isValidating, mutate } = useGetNewC();
-  const changes: Record<string, number> = {};
-  const removedMembers = differenceBy(currentC, newC, "id");
-  removedMembers.forEach((member) => (changes[member.id] = 0));
-  const newMembers = differenceBy(newC, currentC, "id");
-  newMembers.forEach((member) => (changes[member.id] = member.weight));
-  const changedMembers = intersectionWith(
+  const {
     newC,
-    currentC,
-    (a, b) => a.id === b.id && a.weight !== b.count
-  );
-  changedMembers.forEach((member) => (changes[member.id] = member.weight));
-  const currentCDic = currentC.reduce<Record<string, number>>(
-    (prev, cur) => ({ ...prev, [cur.id]: cur.count }),
-    {}
-  );
-  return {
-    changes: Object.keys(changes).map((id) => {
+    isLoading: isLoadingNewC,
+    isValidating: isValidatingNewC,
+    mutate: mutateNewC,
+  } = useGetNewC();
+  const changes = useMemo(() => {
+    const changes: Record<string, number> = {};
+    const removedMembers = differenceBy(currentC, newC, "id");
+    removedMembers.forEach((member) => (changes[member.id] = 0));
+    const newMembers = differenceBy(newC, currentC, "id");
+    newMembers.forEach((member) => (changes[member.id] = member.weight));
+    const changedMembers = intersectionWith(
+      newC,
+      currentC,
+      (a, b) => a.id === b.id && a.weight !== b.count
+    );
+    changedMembers.forEach((member) => (changes[member.id] = member.weight));
+    const currentCDic = currentC.reduce<Record<string, number>>(
+      (prev, cur) => ({ ...prev, [cur.id]: cur.count }),
+      {}
+    );
+    return Object.keys(changes).map((id) => {
       const old = currentCDic[id] ?? 0;
       const weight = changes[id];
       return {
@@ -231,14 +286,38 @@ export const useGetChanges = () => {
             ? `- ${old - weight}`
             : `+ ${weight - old}`,
       };
-    }),
-    isLoading: isLoading || isLoadingCurrentC,
-    isValidating: isValidating || isValidatingCurrentC,
-    mutate: () => {
-      Promise.all([mutate(), mutateCurrentC()]);
-    },
+    });
+  }, [currentC, newC]);
+
+  const mutate = useCallback(() => {
+    return [mutateNewC(), mutateCurrentC()];
+  }, [mutateNewC, mutateCurrentC]);
+
+  const isLoading = useMemo(() => {
+    return isLoadingNewC || isLoadingCurrentC;
+  }, [isLoadingNewC, isLoadingCurrentC]);
+
+  const isValidating = useMemo(() => {
+    return isValidatingNewC || isValidatingCurrentC;
+  }, [isValidatingNewC, isValidatingCurrentC]);
+
+  return {
+    changes,
+    isLoading,
+    isValidating,
+    mutate,
   };
 };
+
+export const useGetChanges = singletonHook(
+  {
+    changes: [],
+    isLoading: false,
+    isValidating: false,
+    mutate: () => [Promise.resolve(undefined), Promise.resolve(undefined)],
+  },
+  useGetChangesImpl
+);
 
 export const enrichMembers = async (
   members: IMember[],
@@ -284,7 +363,7 @@ export const enrichMembers = async (
   return newMembers;
 };
 
-export const useGetTransaction = () => {
+export const useGetTransactionImpl = () => {
   const { newC } = useGetNewC();
   const { changes } = useGetChanges();
   const response = useSWR<AccountResponse>(
@@ -292,36 +371,41 @@ export const useGetTransaction = () => {
     () => server.loadAccount(config.mainAccount),
     { revalidateOnFocus: false }
   );
-  const voicesSum = newC.reduce((prev, cur) => prev + cur.weight, 0);
-  const forTransaction = Math.floor(voicesSum / 2 + 1);
-  if (response.data) {
-    const transaction = new TransactionBuilder(response.data, {
-      fee: "100000",
-      networkPassphrase: Networks.PUBLIC,
-    });
-    transaction.addMemo(Memo.text("Update sign weights"));
-    let opCount = 0;
-    const lastItem = changes[changes.length - 1];
-    changes.forEach((change) => {
-      const operation = Operation.setOptions({
-        signer: {
-          ed25519PublicKey: Keypair.fromPublicKey(change.id).publicKey(),
-          weight: change.weight,
-        },
-        ...(lastItem.id === change.id && {
-          masterWeight: 0,
-          lowThreshold: forTransaction,
-          medThreshold: forTransaction,
-          highThreshold: forTransaction,
-        }),
+  const xdr = useMemo(() => {
+    const voicesSum = newC.reduce((prev, cur) => prev + cur.weight, 0);
+    const forTransaction = Math.floor(voicesSum / 2 + 1);
+    if (response.data) {
+      const transaction = new TransactionBuilder(response.data, {
+        fee: "100000",
+        networkPassphrase: Networks.PUBLIC,
       });
-      transaction.addOperation(operation);
-      opCount++;
-    });
+      transaction.addMemo(Memo.text("Update sign weights"));
+      let opCount = 0;
+      const lastItem = changes[changes.length - 1];
+      changes.forEach((change) => {
+        const operation = Operation.setOptions({
+          signer: {
+            ed25519PublicKey: Keypair.fromPublicKey(change.id).publicKey(),
+            weight: change.weight,
+          },
+          ...(lastItem.id === change.id && {
+            masterWeight: 0,
+            lowThreshold: forTransaction,
+            medThreshold: forTransaction,
+            highThreshold: forTransaction,
+          }),
+        });
+        transaction.addOperation(operation);
+        opCount++;
+      });
 
-    if (opCount) {
-      return transaction.setTimeout(30).build().toEnvelope();
+      if (opCount) {
+        return transaction.setTimeout(30).build().toEnvelope();
+      }
     }
-  }
-  return null;
+    return null;
+  }, [newC, changes, response.data]);
+  return xdr;
 };
+
+export const useGetTransaction = singletonHook(null, useGetTransactionImpl);
