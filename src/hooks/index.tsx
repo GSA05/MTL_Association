@@ -176,7 +176,7 @@ export const useGetMembersImpl = () => {
       });
     });
     return [mmbrs, dlgtns];
-  }, [response.data?.length]);
+  }, [response.data]);
 
   const [fullMembers, setFullMembers] = useState<IMember[]>([]);
 
@@ -339,7 +339,6 @@ export const useGetChangesImpl = () => {
   }, [currentC, newC]);
 
   const mutate = useCallback(() => {
-    console.log("MUTATE");
     return [mutateNewC(), mutateCurrentC()];
   }, [mutateNewC, mutateCurrentC]);
 

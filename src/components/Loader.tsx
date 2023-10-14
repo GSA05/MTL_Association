@@ -1,5 +1,5 @@
 "use client";
-export function Loader() {
+export const Loader = () => {
   return () => (
     <div
       style={{
@@ -11,4 +11,4 @@ export function Loader() {
       <div>Загрузка...</div>
     </div>
   );
-}
+};
