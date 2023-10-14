@@ -32,32 +32,30 @@ const server = new Server("https://horizon.stellar.org");
 const mtlapAsset = new Asset(config.mtlapToken, config.mainAccount);
 
 export const useGetCurrentCImpl = () => {
-  const cache = JSON.parse(localStorage.getItem("currentC") || "null");
-  const today = new Date();
-  today.setDate(today.getDate() - 1);
   const response = useSWR<AccountResponse>(
     "currentC",
-    () => {
-      const cache = JSON.parse(localStorage.getItem("currentC") || "null");
+    async () => {
+      const cache = JSON.parse(localStorage?.getItem("currentC") || "null");
       const today = new Date();
       today.setDate(today.getDate() - 1);
-      return !cache || new Date(cache.date).getTime() < today.getTime()
-        ? server.loadAccount(config.mainAccount)
-        : cache.data;
+      if (
+        !cache ||
+        !cache.data ||
+        new Date(cache.date).getTime() < today.getTime()
+      ) {
+        const result = await server.loadAccount(config.mainAccount);
+        localStorage?.setItem(
+          "currentC",
+          JSON.stringify({ data: result, date: new Date() })
+        );
+        return result;
+      } else {
+        return cache.data;
+      }
     },
     { revalidateOnFocus: false, revalidateIfStale: false }
   );
   const { data: account, error, mutate, isLoading, isValidating } = response;
-  if (
-    !cache ||
-    !cache.data ||
-    new Date(cache.date).getTime() < today.getTime()
-  ) {
-    localStorage.setItem(
-      "currentC",
-      JSON.stringify({ data: account, date: new Date() })
-    );
-  }
   const currentC = useMemo(() => {
     return account?.signers
       .filter((signer) => signer.key !== config.mainAccount)
@@ -102,10 +100,8 @@ const asyncWhile: <T extends Horizon.BaseResponse>(
 };
 
 export const useGetMembersImpl = () => {
-  const cache = JSON.parse(localStorage.getItem("members") || "null");
+  const cache = JSON.parse(localStorage?.getItem("members") || "null");
   const date = cache?.date || null;
-  const today = new Date();
-  today.setDate(today.getDate() - 1);
   const response = useSWR<ServerApi.AccountRecord[]>(
     "members",
     async () => {
@@ -119,6 +115,10 @@ export const useGetMembersImpl = () => {
           res.records,
           await asyncWhile<ServerApi.AccountRecord>(records, res.next)
         );
+        localStorage?.setItem(
+          "members",
+          JSON.stringify({ data: records, date: new Date() })
+        );
         return records;
       } else {
         return cache.data;
@@ -129,17 +129,6 @@ export const useGetMembersImpl = () => {
       revalidateIfStale: false,
     }
   );
-
-  if (
-    !cache ||
-    !cache.data ||
-    new Date(cache.date).getTime() < today.getTime()
-  ) {
-    localStorage.setItem(
-      "members",
-      JSON.stringify({ data: response.data, date: new Date() })
-    );
-  }
 
   const [members, delegations]: [IMember[], string[]] = useMemo(() => {
     const mmbrs: IMember[] = [];
@@ -381,7 +370,7 @@ export const enrichMembers = async (
     (
       await Promise.all(
         orphans.map(async (id) => {
-          let cache = JSON.parse(localStorage.getItem("accounts") || "null");
+          let cache = JSON.parse(localStorage?.getItem("accounts") || "null");
           const today = new Date();
           today.setDate(today.getDate() - 1);
           const cachedValue = cache?.data?.[id];
@@ -417,7 +406,7 @@ export const enrichMembers = async (
               data: { ...cache?.data, [id]: member },
               date: new Date(),
             };
-            localStorage.setItem("accounts", JSON.stringify(cache));
+            localStorage?.setItem("accounts", JSON.stringify(cache));
             return member;
           } else {
             return cachedValue;
