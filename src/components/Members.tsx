@@ -3,6 +3,7 @@ import { useGetMembers } from "@/hooks";
 import { Link } from "./Link";
 import dynamic from "next/dynamic";
 import { IMember } from "@/interfaces";
+import { Loader } from "./Loader";
 
 function Members() {
   const { members, isLoading, isValidating, mutate } = useGetMembers();
@@ -50,4 +51,7 @@ function Members() {
   );
 }
 
-export default dynamic(() => Promise.resolve(Members), { ssr: false });
+export default dynamic(() => Promise.resolve(Members), {
+  ssr: false,
+  loading: Loader(),
+});

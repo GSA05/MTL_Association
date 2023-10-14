@@ -4,6 +4,7 @@ import { Link } from "./Link";
 import { useGetNewC, useGetTree } from "@/hooks";
 import { sumCount } from "@/utils";
 import dynamic from "next/dynamic";
+import { Loader } from "./Loader";
 
 function NewC() {
   const { newC, isLoading, isValidating, mutate } = useGetNewC();
@@ -53,4 +54,7 @@ function NewC() {
   );
 }
 
-export default dynamic(() => Promise.resolve(NewC), { ssr: false });
+export default dynamic(() => Promise.resolve(NewC), {
+  ssr: false,
+  loading: Loader(),
+});

@@ -2,6 +2,7 @@
 import { useGetCurrentC } from "@/hooks";
 import { Link } from "./Link";
 import dynamic from "next/dynamic";
+import { Loader } from "./Loader";
 
 function CurrentC() {
   const { currentC, error, mutate, isLoading, isValidating } = useGetCurrentC();
@@ -37,4 +38,7 @@ function CurrentC() {
   );
 }
 
-export default dynamic(() => Promise.resolve(CurrentC), { ssr: false });
+export default dynamic(() => Promise.resolve(CurrentC), {
+  ssr: false,
+  loading: Loader(),
+});

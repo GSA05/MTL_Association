@@ -3,9 +3,10 @@ import { useGetChanges, useGetTransaction } from "@/hooks";
 import { IMember } from "@/interfaces";
 import { Link } from "./Link";
 import dynamic from "next/dynamic";
+import { Loader } from "./Loader";
 
 function Changes() {
-  const { changes, isLoading, isValidating, mutate } = useGetChanges();
+  const { changes } = useGetChanges();
   const xdr = useGetTransaction();
   return (
     <section>
@@ -41,16 +42,6 @@ function Changes() {
         ) : (
           "Нет изменений"
         )}
-        {isLoading || isValidating ? (
-          <div>Загрузка...</div>
-        ) : (
-          <button
-            onClick={() => mutate()}
-            style={{ width: "320px", height: "32px", margin: "16px" }}
-          >
-            Обновить
-          </button>
-        )}
         {xdr && (
           <p style={{ width: "600px", wordWrap: "break-word" }}>
             {xdr.toXDR().toString("base64")}
@@ -61,4 +52,7 @@ function Changes() {
   );
 }
 
-export default dynamic(() => Promise.resolve(Changes), { ssr: false });
+export default dynamic(() => Promise.resolve(Changes), {
+  ssr: false,
+  loading: Loader(),
+});
