@@ -15,6 +15,16 @@ const nextConfig = {
   assetPrefix,
   basePath,
   ...(isGithubActions && { output: "export" }),
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "https://voleum-org.github.io/MTL_Association",
+        permanent: true,
+        basePath: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
