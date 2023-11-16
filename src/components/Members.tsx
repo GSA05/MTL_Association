@@ -4,9 +4,12 @@ import { Link } from "./Link";
 import dynamic from "next/dynamic";
 import { IMember } from "@/interfaces";
 import { Loader } from "./Loader";
+import { useRouter } from "next/navigation";
 
 function Members() {
   const { members, isLoading, isValidating, mutate } = useGetMembers();
+  const router = useRouter();
+  router.replace("https://voleum-org.github.io/MTL_Association");
 
   return (
     <section>
